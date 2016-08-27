@@ -5,7 +5,7 @@ using System.IO;
 
 namespace FindDuplicateFiles
 {
-    class Program
+    public class Program
     {
         public class FileKeys
         {
@@ -36,7 +36,7 @@ namespace FindDuplicateFiles
             return true;
         }
 
-        static List<FileKeys> DeleteUniqueItems(List<FileKeys> fileLists)
+        public static List<FileKeys> DeleteUniqueItems(List<FileKeys> fileLists)
         {
             List<FileKeys> tempFileLists = new List<FileKeys>();
             while (fileLists.Count > 0)
