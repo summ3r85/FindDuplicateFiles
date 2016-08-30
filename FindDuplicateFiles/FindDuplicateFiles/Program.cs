@@ -72,7 +72,7 @@ namespace FindDuplicateFiles
             return tempFileLists;
         }
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
 
          
@@ -84,11 +84,11 @@ namespace FindDuplicateFiles
                 Console.WriteLine(@"FindDuplicateFiles.exe DirectoryPath. Example: FindDuplicateFiles.exe C:\Dir");
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.ReadLine();
-                return;
+                return 0;
 
             }
             string directoryArg = args[0];
-            Console.WriteLine("Scanning Folder {0}", directoryArg);
+            
             try
             {
                 DirectoryInfo di = new DirectoryInfo(directoryArg);
@@ -130,12 +130,12 @@ namespace FindDuplicateFiles
                     }
 
                 }
-                Console.ReadLine();
+                return 0;
             }
             catch (Exception e)
             {
                 Console.WriteLine("Error:{0}", e);
-                return;
+                return 1;
             }
             
 
