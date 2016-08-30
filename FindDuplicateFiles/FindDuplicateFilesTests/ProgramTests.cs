@@ -34,11 +34,12 @@ namespace FindDuplicateFiles.Tests
             List<Program.FileKeys> lisfilesFileKeyses = new List<Program.FileKeys>();
             lisfilesFileKeyses = GetDirectoryFilesAsFileKeys(@"d:\code\FindDulicateFiles\InpudFolder\");
             
-            Assert.AreEqual(lisfilesFileKeyses.Count,12,"Files Count should be 12");
+            Assert.AreEqual(12, lisfilesFileKeyses.Count,"Files count should be 12");
 
             List < Program.FileKeys > UniqeItemsRemovedList = new List<Program.FileKeys>();
+
             UniqeItemsRemovedList = Program.DeleteUniqueItems(lisfilesFileKeyses);
-            Assert.AreEqual(UniqeItemsRemovedList.Count, 8, "After Removing unique files size Count should be 12");
+            Assert.AreEqual(8, UniqeItemsRemovedList.Count, "After Removing unique files; in List should be be 8 items");
 
 
         }

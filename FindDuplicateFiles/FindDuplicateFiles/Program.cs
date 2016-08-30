@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 
 namespace FindDuplicateFiles
@@ -39,25 +40,32 @@ namespace FindDuplicateFiles
         public static List<FileKeys> DeleteUniqueItems(List<FileKeys> fileLists)
         {
             List<FileKeys> tempFileLists = new List<FileKeys>();
-            while (fileLists.Count > 0)
+            List<FileKeys> GroupedListBySize = fileLists.OrderBy(o => o.FileObj.Length).ToList();
+            while (GroupedListBySize.Count > 1)
             {
                 int i = 0;
                 bool isDuplicated = false;
-                for (int j = i + 1; j < fileLists.Count; j++)
+                for (int j = i + 1; j < GroupedListBySize.Count; j++)
                 {
-                    if (fileLists[i].FileObj.Length == fileLists[j].FileObj.Length)
+                    if (GroupedListBySize[i].FileObj.Length == GroupedListBySize[j].FileObj.Length)
                     {
                         //add duplicated to new List
-                        tempFileLists.Add(fileLists[j]);
+                        tempFileLists.Add(GroupedListBySize[j]);
 
                         //remove from old
-                        fileLists.RemoveAt(j);
+                        GroupedListBySize.RemoveAt(j);
                         j--;
                         isDuplicated = true;
                     }
+                    else
+                    {
+                        if (isDuplicated) tempFileLists.Add(GroupedListBySize[i]);
+                        GroupedListBySize.RemoveAt(i);
+                        break;
+                    }
                 }
-                if (isDuplicated) tempFileLists.Add(fileLists[i]);
-                fileLists.RemoveAt(i);
+                if (isDuplicated && GroupedListBySize.Count==1) tempFileLists.Add(fileLists[i]);
+
 
             }
 
@@ -76,7 +84,7 @@ namespace FindDuplicateFiles
                 Console.WriteLine(@"FindDuplicateFiles.exe DirectoryPath. Example: FindDuplicateFiles.exe C:\Dir");
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.ReadLine();
-                Environment.Exit(0);
+                return;
 
             }
             string directoryArg = args[0];
@@ -84,19 +92,18 @@ namespace FindDuplicateFiles
             try
             {
                 DirectoryInfo di = new DirectoryInfo(directoryArg);
-                FileInfo[] fileList = di.GetFiles();
+                FileInfo[] fileList = di.GetFiles("*", SearchOption.AllDirectories);
                 List<FileKeys> fl = new List<FileKeys>();
 
+                //Array2List; we can use just FileInfo instead FileKeys, just for training purpose.
                 foreach (FileInfo filesInfo in fileList)
                 {
                     fl.Add(new FileKeys() { FileObj = filesInfo });
+                  
                 }
-
                 List<FileKeys> flsorted = DeleteUniqueItems(fl);
 
-                //Sort by Size;
-                flsorted.Sort((keys, fileKeys) => (int)keys.FileObj.Length);
-
+              
                 while (flsorted.Count > 0)
                 {
                     int i = 0;
@@ -127,8 +134,8 @@ namespace FindDuplicateFiles
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error:{0}", e);    
-                
+                Console.WriteLine("Error:{0}", e);
+                return;
             }
             
 
