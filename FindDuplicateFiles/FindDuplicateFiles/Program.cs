@@ -11,65 +11,94 @@ namespace FindDuplicateFiles
         public class FileKeys
         {
 
-            public FileInfo FileObj { get; set; }
+            public FileKeys(){
+            }
+            public FileKeys(double length)
+            {
+                FileObj = new FileInfo("null_file");
+                Length = length;
+            }
+            public FileKeys(FileInfo fileinfo, double length)
+            {
+                FileObj = fileinfo;
+                Length = length;
+            }
+
+            public double Length { get; set; }
+            public FileInfo FileObj { get ;
+                    set; }
 
             public override string ToString()
             {
                 return "filename: " + FileObj.Name + "   Size: " + FileObj.Length;
             }
-
-
+            
+            
         }
 
-        static bool CompareTwoFiles(FileKeys first, FileKeys second)
+        const int BYTES_TO_READ = sizeof(Int64);
+        public static bool CompareTwoFiles(FileInfo first, FileInfo second)
         {
-            
-            using (FileStream fs1 = first.FileObj.OpenRead())
-            using (FileStream fs2 = second.FileObj.OpenRead())
+            if (first.Length != second.Length)
+                return false;
+
+            int iterations = (int)Math.Ceiling((double)first.Length / BYTES_TO_READ);
+            try
             {
-                for (int i = 0; i < first.FileObj.Length; i++)
+                using (FileStream fs1 = first.OpenRead())
+                using (FileStream fs2 = second.OpenRead())
                 {
-                    if (fs1.ReadByte() != fs2.ReadByte())
-                        return false;
+                    byte[] one = new byte[BYTES_TO_READ];
+                    byte[] two = new byte[BYTES_TO_READ];
+
+                    for (int i = 0; i < iterations; i++)
+                    {
+                        fs1.Read(one, 0, BYTES_TO_READ);
+                        fs2.Read(two, 0, BYTES_TO_READ);
+
+                        if (BitConverter.ToInt64(one, 0) != BitConverter.ToInt64(two, 0))
+                            //if (!Array.Equals(one, two))
+                            return false;
+                    }
                 }
+                return true;
+            }
+            catch {
+                return false;
             }
 
-            return true;
+
+            
         }
 
         public static List<FileKeys> DeleteUniqueItems(List<FileKeys> fileLists)
         {
             List<FileKeys> tempFileLists = new List<FileKeys>();
-            List<FileKeys> GroupedListBySize = fileLists.OrderBy(o => o.FileObj.Length).ToList();
+            List<FileKeys> GroupedListBySize = fileLists.OrderBy(o => o.Length).ToList();
+            bool isDuplicated = false;
             while (GroupedListBySize.Count > 1)
             {
                 int i = 0;
-                bool isDuplicated = false;
-                for (int j = i + 1; j < GroupedListBySize.Count; j++)
-                {
-                    if (GroupedListBySize[i].FileObj.Length == GroupedListBySize[j].FileObj.Length)
+                int j = 1;
+                if (GroupedListBySize[i].Length == GroupedListBySize[j].Length)
                     {
                         //add duplicated to new List
                         tempFileLists.Add(GroupedListBySize[j]);
 
                         //remove from old
                         GroupedListBySize.RemoveAt(j);
-                        j--;
                         isDuplicated = true;
                     }
                     else
                     {
                         if (isDuplicated) tempFileLists.Add(GroupedListBySize[i]);
                         GroupedListBySize.RemoveAt(i);
-                        break;
+                        isDuplicated = false;
                     }
-                }
-                if (isDuplicated && GroupedListBySize.Count==1) tempFileLists.Add(fileLists[i]);
-
-
+                 if (isDuplicated && GroupedListBySize.Count == 1) tempFileLists.Add(fileLists[i]);
+                 
             }
-
-            return tempFileLists;
+          return tempFileLists;
         }
 
         static int Main(string[] args)
@@ -92,15 +121,24 @@ namespace FindDuplicateFiles
             try
             {
                 DirectoryInfo di = new DirectoryInfo(directoryArg);
-                FileInfo[] fileList = di.GetFiles("*", SearchOption.AllDirectories);
                 List<FileKeys> fl = new List<FileKeys>();
 
+                //FileInfo[] fileList = di.GetFiles("*", SearchOption.AllDirectories);
                 //Array2List; we can use just FileInfo instead FileKeys, just for training purpose.
-                foreach (FileInfo filesInfo in fileList)
+                //foreach (FileInfo filesInfo in fileList)
+                //{
+                //    fl.Add(new FileKeys(filesInfo, filesInfo.Length));
+
+                //}
+
+                List<FileInfo> fileList2 = new List<FileInfo>();
+                fileList2 = GetFiles(di, ref fileList2);
+                foreach (var filesInfo in fileList2)
                 {
-                    fl.Add(new FileKeys() { FileObj = filesInfo });
-                  
+                    fl.Add(new FileKeys(filesInfo, filesInfo.Length));
                 }
+
+               
                 List<FileKeys> flsorted = DeleteUniqueItems(fl);
 
               
@@ -110,9 +148,10 @@ namespace FindDuplicateFiles
                     int jj = 0;
                     for (int j = 1; j < flsorted.Count; j++)
                     {
-                        if (flsorted[i].FileObj.Length == flsorted[j].FileObj.Length)
+                        
+                        if (flsorted[i].Length == flsorted[j].Length)
                         {
-                            if (CompareTwoFiles(flsorted[i], flsorted[j]))
+                            if (CompareTwoFiles(flsorted[i].FileObj, flsorted[j].FileObj))
                             {
                                 Console.WriteLine("{0}\r\n{1}\r\n", flsorted[i], flsorted[j]);
                             }
@@ -130,6 +169,7 @@ namespace FindDuplicateFiles
                     }
 
                 }
+                
                 return 0;
             }
             catch (Exception e)
@@ -140,6 +180,46 @@ namespace FindDuplicateFiles
             
 
             
+        }
+        
+        static List<FileInfo> GetFiles(DirectoryInfo dir, ref List<FileInfo> FileList )
+
+        {
+            
+            try
+            {
+                FileInfo[] FileListArray = dir.GetFiles();
+                foreach (FileInfo filesInfo in FileListArray)
+                {
+                    try
+                    {
+                        
+                        FileList.Add(filesInfo);
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                foreach (var subdir in dir.GetDirectories())
+                {
+                    GetFiles(subdir, ref FileList);
+                }
+            }
+            catch
+            {
+
+            }
+
+
+            return FileList;  
         }
     }
 }
